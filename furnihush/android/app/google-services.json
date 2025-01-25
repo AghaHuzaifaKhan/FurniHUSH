@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "796653433533",
+    "project_id": "furnihush",
+    "storage_bucket": "furnihush.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:796653433533:android:38bd0e5fd277aaa3c57dd4",
+        "android_client_info": {
+          "package_name": "com.example.furnihush"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDmtRI_r-0xITXCLEDuKGqk9MMv8c5mT-4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
