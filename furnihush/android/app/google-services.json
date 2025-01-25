@@ -12,7 +12,20 @@
           "package_name": "com.example.furnihush"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "796653433533-b0g4kb40mrij4jea4gkcas9t8n7mpklp.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.furnihush",
+            "certificate_hash": "72ec075f49b98ae0457d5db1cf4ab9737430a725"
+          }
+        },
+        {
+          "client_id": "796653433533-vs7bkc0omn1cfavec2j5nuehfo2pks26.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
           "current_key": "AIzaSyDmtRI_r-0xITXCLEDuKGqk9MMv8c5mT-4"
@@ -20,7 +33,12 @@
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "796653433533-vs7bkc0omn1cfavec2j5nuehfo2pks26.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
         }
       }
     }

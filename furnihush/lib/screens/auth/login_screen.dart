@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:furnihush/screens/auth/signup_screen.dart';
 import 'package:furnihush/screens/home/home_screen.dart';
 import 'package:furnihush/controllers/auth_controller.dart';
-import 'package:furnihush/consts/firebase_consts.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -17,6 +17,7 @@ class _LoginScreenState extends State<LoginScreen> {
   final _passwordController = TextEditingController();
   bool _rememberMe = false;
   final _authController = AuthController();
+  bool _isLoading = false;
 
   @override
   Widget build(BuildContext context) {
@@ -140,13 +141,45 @@ class _LoginScreenState extends State<LoginScreen> {
                         borderRadius: BorderRadius.circular(12),
                       ),
                     ),
-                    child: const Text(
-                      'SIGN IN',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
+                    child: _isLoading
+                        ? const CircularProgressIndicator(color: Colors.white)
+                        : const Text(
+                            'SIGN IN',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                const Text('OR'),
+                const SizedBox(height: 16),
+                SizedBox(
+                  width: double.infinity,
+                  child: OutlinedButton.icon(
+                    onPressed: () async {
+                      try {
+                        var result = await _authController.signInWithGoogle();
+                        if (result != null && mounted) {
+                          Navigator.pushReplacement(
+                            // ignore: use_build_context_synchronously
+                            context,
+                            MaterialPageRoute(
+                                builder: (context) => const HomeScreen()),
+                          );
+                        }
+                      } catch (e) {
+                        if (mounted) {
+                          // ignore: use_build_context_synchronously
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(content: Text(e.toString())),
+                          );
+                        }
+                      }
+                    },
+                    icon: Image.asset('assets/icons/google.png', height: 24),
+                    label: const Text('Sign in with Google'),
                   ),
                 ),
                 const SizedBox(height: 24),
@@ -182,39 +215,46 @@ class _LoginScreenState extends State<LoginScreen> {
 
   Future<void> _handleLogin() async {
     if (_formKey.currentState!.validate()) {
+      setState(() => _isLoading = true);
       try {
         var result = await _authController.loginMethod(
           _emailController.text,
           _passwordController.text,
         );
+
         if (!mounted) return;
 
         if (result != null) {
-          // Get user data from Firestore
-          var userData = await firestore
-              .collection(usersCollection)
-              .doc(result.user?.uid)
-              .get();
-
-          if (userData.exists) {
-            // ignore: use_build_context_synchronously
-            Navigator.pushReplacement(
-              context,
-              MaterialPageRoute(builder: (context) => const HomeScreen()),
-            );
-          }
-        } else {
           // ignore: use_build_context_synchronously
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Invalid email or password')),
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (context) => const HomeScreen()),
           );
         }
+      } on FirebaseAuthException catch (e) {
+        if (!mounted) return;
+        // ignore: use_build_context_synchronously
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              e.code == 'user-not-found'
+                  ? 'No user found with this email'
+                  : e.code == 'wrong-password'
+                      ? 'Wrong password'
+                      : e.code == 'invalid-credential'
+                          ? 'Invalid email or password'
+                          : e.message ?? 'An error occurred',
+            ),
+          ),
+        );
       } catch (e) {
         if (!mounted) return;
         // ignore: use_build_context_synchronously
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(e.toString())),
         );
+      } finally {
+        if (mounted) setState(() => _isLoading = false);
       }
     }
   }
