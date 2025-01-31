@@ -1,7 +1,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
-import 'package:furnihush/screens/auth/login_screen.dart';
+import 'package:furnihush/models/cart_item.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 
 class AuthController {
@@ -12,40 +12,28 @@ class AuthController {
   // Login method
   Future<UserCredential?> loginMethod(String email, String password) async {
     try {
-      // Sign in first
       final userCredential = await _auth.signInWithEmailAndPassword(
         email: email.trim(),
         password: password.trim(),
       );
 
-      try {
-        // Then check Firestore
-        final userDoc = await _firestore
-            .collection('users')
-            .doc(userCredential.user?.uid)
-            .get();
+      // Fetch user data after login
+      final userDoc = await _firestore
+          .collection('users')
+          .doc(userCredential.user?.uid)
+          .get();
 
-        if (!userDoc.exists) {
-          // Create user document if it doesn't exist
-          await _firestore
-              .collection('users')
-              .doc(userCredential.user?.uid)
-              .set({
-            'email': email,
-            'createdAt': Timestamp.now(),
-          });
-        }
-      } catch (e) {
-        debugPrint('Firestore error: $e');
-        // Continue even if Firestore fails
+      if (!userDoc.exists) {
+        // Create basic user document if it doesn't exist
+        await _firestore.collection('users').doc(userCredential.user?.uid).set({
+          'email': email,
+          'createdAt': Timestamp.now(),
+        });
       }
 
       return userCredential;
     } on FirebaseAuthException catch (e) {
       debugPrint('Login error: ${e.code} - ${e.message}');
-      rethrow;
-    } catch (e) {
-      debugPrint('Unexpected login error: $e');
       rethrow;
     }
   }
@@ -118,39 +106,62 @@ class AuthController {
   }
 
   // Store user data
-  Future<void> storeUserData(
-    String name,
-    String email,
-    String password,
-    String image,
-    String address,
-  ) async {
-    try {
-      await _firestore.collection('users').doc(_auth.currentUser?.uid).set({
-        'name': name,
-        'email': email,
-        'password': password,
-        'image': image,
-        'address': address,
-        'createdAt': Timestamp.now(),
-      });
-    } catch (e) {
-      debugPrint('Store user data error: $e');
-      rethrow;
-    }
+  Future<void> storeUserData(String name, String email, String password,
+      String phone, String image, String address) async {
+    await _firestore.collection('users').doc(_auth.currentUser?.uid).set({
+      'name': name,
+      'email': email,
+      'phone': phone,
+      'image': image,
+      'address': address,
+      'createdAt': Timestamp.now(),
+    });
   }
 
   // Signout method
-  Future<void> signOutMethod(BuildContext context) async {
-    try {
-      await _auth.signOut();
-      Navigator.pushReplacement(
-        // ignore: use_build_context_synchronously
-        context,
-        MaterialPageRoute(builder: (context) => const LoginScreen()),
-      );
-    } catch (e) {
-      debugPrint('Signout error: $e');
-    }
+  Future<void> signOut() async {
+    await _auth.signOut();
+  }
+
+  // store cart data
+  Future<void> storeCartData(List<CartItem> cartItems) async {
+    await _firestore.collection('cart').doc(_auth.currentUser?.uid).set({
+      'items': cartItems
+          .map((item) => {
+                'id': item.id,
+                'name': item.name,
+                'price': item.price,
+                'image': item.image,
+                'quantity': item.quantity,
+              })
+          .toList(),
+    });
+  }
+
+  //profile data store
+  Future<void> storeProfileData(String name, String email, String password,
+      String phone, String image, String address) async {
+    await _firestore.collection('users').doc(_auth.currentUser?.uid).set({
+      'name': name,
+      'email': email,
+      'password': password,
+      'phone': phone,
+      'image': image,
+      'address': address,
+    });
+  }
+
+  //forgot password
+  Future<void> forgotPassword(String email) async {
+    await _auth.sendPasswordResetEmail(email: email);
+  }
+
+  //payment method
+  Future<void> addPaymentMethod(String cardNumber) async {
+    final maskedNumber =
+        '**** **** **** ${cardNumber.substring(cardNumber.length - 4)}';
+    await _firestore.collection('users').doc(_auth.currentUser?.uid).update({
+      'paymentMethods': FieldValue.arrayUnion([maskedNumber])
+    });
   }
 }

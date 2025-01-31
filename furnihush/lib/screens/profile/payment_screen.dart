@@ -89,6 +89,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
                                     .doc(currentUser?.uid)
                                     .update({'paymentMethods': updatedMethods});
                               } catch (e) {
+                                // ignore: use_build_context_synchronously
                                 ScaffoldMessenger.of(context).showSnackBar(
                                   SnackBar(
                                       content: Text('Error removing card: $e')),

@@ -12,18 +12,29 @@ class SettingsScreen extends StatefulWidget {
 }
 
 class _SettingsScreenState extends State<SettingsScreen> {
-  late TextEditingController _nameController;
-  late TextEditingController _emailController;
+  final TextEditingController _nameController = TextEditingController();
+  final TextEditingController _emailController = TextEditingController();
   String? _selectedImagePath;
   final ImagePicker _picker = ImagePicker();
 
   @override
   void initState() {
     super.initState();
-    final user = context.read<UserProvider>().user;
-    _nameController = TextEditingController(text: user.name);
-    _emailController = TextEditingController(text: user.email);
-    _selectedImagePath = user.profilePicture;
+    _loadUserData();
+  }
+
+  Future<void> _loadUserData() async {
+    final userProvider = Provider.of<UserProvider>(context, listen: false);
+    await userProvider.fetchUserData();
+
+    final userData = userProvider.userData;
+    if (userData != null) {
+      setState(() {
+        _nameController.text = userData['name'] ?? '';
+        _emailController.text = userData['email'] ?? '';
+        _selectedImagePath = userData['image'];
+      });
+    }
   }
 
   @override
@@ -90,43 +101,19 @@ class _SettingsScreenState extends State<SettingsScreen> {
         imageQuality: 85,
       );
       if (image != null) {
+        // Save image path to Firebase
+        // ignore: use_build_context_synchronously
+        await context.read<UserProvider>().updateUser(
+              profilePicture: image.path,
+            );
         setState(() {
           _selectedImagePath = image.path;
         });
       }
     } catch (e) {
-      // ignore: use_build_context_synchronously
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Failed to pick image: ${e.toString()}'),
-          backgroundColor: Colors.red,
-        ),
-      );
-    }
-  }
-
-  Future<void> _saveChanges() async {
-    try {
-      await context.read<UserProvider>().updateUser(
-            name: _nameController.text,
-            email: _emailController.text,
-            profilePicture: _selectedImagePath,
-          );
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Profile updated successfully'),
-            backgroundColor: Colors.green,
-          ),
-        );
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Failed to update profile: ${e.toString()}'),
-            backgroundColor: Colors.red,
-          ),
+          SnackBar(content: Text('Failed to pick image: $e')),
         );
       }
     }
@@ -138,84 +125,116 @@ class _SettingsScreenState extends State<SettingsScreen> {
       appBar: AppBar(
         title: const Text('Settings'),
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            _buildProfileImage(),
-            const SizedBox(height: 32),
-            const Text(
-              'Profile Settings',
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const SizedBox(height: 16),
-            TextField(
-              controller: _nameController,
-              decoration: const InputDecoration(
-                labelText: 'Name',
-                border: OutlineInputBorder(),
-                prefixIcon: Icon(Icons.person_outline),
-              ),
-            ),
-            const SizedBox(height: 16),
-            TextField(
-              controller: _emailController,
-              decoration: const InputDecoration(
-                labelText: 'Email',
-                border: OutlineInputBorder(),
-                prefixIcon: Icon(Icons.email_outlined),
-              ),
-            ),
-            const SizedBox(height: 24),
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                onPressed: _saveChanges,
-                style: ElevatedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
+      body: Consumer<UserProvider>(
+        builder: (context, userProvider, child) {
+          final userData = userProvider.userData;
+
+          if (userData == null) {
+            return const Center(child: CircularProgressIndicator());
+          }
+
+          return SingleChildScrollView(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                _buildProfileImage(),
+                const SizedBox(height: 32),
+                const Text(
+                  'Profile Settings',
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
                   ),
                 ),
-                child: const Text('Save Changes'),
-              ),
-            ),
-            const SizedBox(height: 16),
-            const Divider(),
-            const SizedBox(height: 16),
-            ListTile(
-              leading: const Icon(Icons.lock_outline),
-              title: const Text('Change Password'),
-              trailing: const Icon(Icons.chevron_right),
-              onTap: () {
-                // Implement change password functionality
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Change password feature coming soon'),
+                const SizedBox(height: 16),
+                TextField(
+                  controller: _nameController,
+                  decoration: const InputDecoration(
+                    labelText: 'Name',
+                    border: OutlineInputBorder(),
+                    prefixIcon: Icon(Icons.person_outline),
                   ),
-                );
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.notifications_outlined),
-              title: const Text('Notification Settings'),
-              trailing: const Icon(Icons.chevron_right),
-              onTap: () {
-                // Implement notification settings
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Notification settings coming soon'),
+                ),
+                const SizedBox(height: 16),
+                TextField(
+                  controller: _emailController,
+                  decoration: const InputDecoration(
+                    labelText: 'Email',
+                    border: OutlineInputBorder(),
+                    prefixIcon: Icon(Icons.email_outlined),
                   ),
-                );
-              },
+                ),
+                const SizedBox(height: 24),
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: _saveChanges,
+                    style: ElevatedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                    ),
+                    child: const Text('Save Changes'),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                const Divider(),
+                const SizedBox(height: 16),
+                ListTile(
+                  leading: const Icon(Icons.lock_outline),
+                  title: const Text('Change Password'),
+                  trailing: const Icon(Icons.chevron_right),
+                  onTap: () {
+                    // Implement change password functionality
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Change password feature coming soon'),
+                      ),
+                    );
+                  },
+                ),
+                ListTile(
+                  leading: const Icon(Icons.notifications_outlined),
+                  title: const Text('Notification Settings'),
+                  trailing: const Icon(Icons.chevron_right),
+                  onTap: () {
+                    // Implement notification settings
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Notification settings coming soon'),
+                      ),
+                    );
+                  },
+                ),
+              ],
             ),
-          ],
-        ),
+          );
+        },
       ),
     );
+  }
+
+  Future<void> _saveChanges() async {
+    try {
+      await context.read<UserProvider>().updateUser(
+            name: _nameController.text,
+            email: _emailController.text,
+            profilePicture: _selectedImagePath,
+          );
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Profile updated successfully')),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error updating profile: $e')),
+        );
+      }
+    }
   }
 }

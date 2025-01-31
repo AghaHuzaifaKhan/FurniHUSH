@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-
 import 'package:provider/provider.dart';
 import 'package:furnihush/providers/cart_provider.dart';
+import 'package:furnihush/screens/ar/ar_view_screen.dart';
 
 class ProductDetailScreen extends StatefulWidget {
   final int productId;
@@ -156,22 +156,58 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
       ),
       bottomNavigationBar: Padding(
         padding: const EdgeInsets.all(16.0),
-        child: ElevatedButton(
-          onPressed: () {
-            context.read<CartProvider>().addItem(
-                  id: widget.productId,
-                  name: widget.name ?? 'Unknown Product',
-                  price: widget.price ?? 0.0,
-                  image: widget.images?.first ?? '',
-                );
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('Item added to cart'),
-                duration: Duration(seconds: 1),
+        child: Row(
+          children: [
+            Expanded(
+              flex: 1,
+              child: ElevatedButton.icon(
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => ARViewScreen(
+                        modelUrl: product.arModelUrl,
+                        productName: product.name,
+                      ),
+                    ),
+                  );
+                },
+                icon: const Icon(Icons.view_in_ar),
+                label: const Text('View in AR'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.amber,
+                  foregroundColor: Colors.black,
+                ),
               ),
-            );
-          },
-          child: const Text('Add to Cart'),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              flex: 2,
+              child: ElevatedButton.icon(
+                onPressed: () {
+                  context.read<CartProvider>().addToCart(
+                        CartItem(
+                          id: widget.productId,
+                          name: widget.name ?? 'Unknown Product',
+                          price: widget.price ?? 0.0,
+                          image: widget.images?.first ?? '',
+                          quantity: 1,
+                        ),
+                      );
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Added to cart')),
+                  );
+                },
+                icon: const Icon(Icons.shopping_cart),
+                label: const Text('Add to Cart'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.amber,
+                  foregroundColor: Colors.black,
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );

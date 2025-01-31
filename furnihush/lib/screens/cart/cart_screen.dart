@@ -100,9 +100,8 @@ class CartScreen extends StatelessWidget {
                     SizedBox(
                       width: double.infinity,
                       child: ElevatedButton(
-                        onPressed: cart.items.isEmpty
-                            ? null
-                            : () => _processCheckout(context, cart),
+                        onPressed: () =>
+                            _showOrderReceipt(context, cart.totalAmount),
                         style: ElevatedButton.styleFrom(
                           padding: const EdgeInsets.symmetric(vertical: 16),
                           backgroundColor: Colors.amber,
@@ -127,70 +126,138 @@ class CartScreen extends StatelessWidget {
     );
   }
 
-  Future<void> _processCheckout(BuildContext context, CartProvider cart) async {
-    // Show loading dialog
-    showDialog(
+  Future<void> _showOrderReceipt(BuildContext context, double total) async {
+    final userProvider = Provider.of<UserProvider>(context, listen: false);
+    final userData = userProvider.userData;
+
+    final nameController = TextEditingController(text: userData?['name'] ?? '');
+    final phoneController =
+        TextEditingController(text: userData?['phone'] ?? '');
+    final addressController =
+        TextEditingController(text: userData?['address'] ?? '');
+
+    return showDialog(
       context: context,
-      barrierDismissible: false,
-      builder: (context) => const Center(
-        child: CircularProgressIndicator(),
+      builder: (context) => AlertDialog(
+        title: const Text('Order Details'),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: nameController,
+                decoration: const InputDecoration(
+                  labelText: 'Full Name',
+                  border: OutlineInputBorder(),
+                ),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: phoneController,
+                decoration: const InputDecoration(
+                  labelText: 'Phone Number',
+                  border: OutlineInputBorder(),
+                ),
+                keyboardType: TextInputType.phone,
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: addressController,
+                decoration: const InputDecoration(
+                  labelText: 'Delivery Address',
+                  border: OutlineInputBorder(),
+                ),
+                maxLines: 2,
+              ),
+              const SizedBox(height: 16),
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.grey.shade100,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Column(
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Text('Subtotal:'),
+                        Text('\$${total.toStringAsFixed(2)}'),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Text('Delivery:'),
+                        Text('\$${(total * 0.1).toStringAsFixed(2)}'),
+                      ],
+                    ),
+                    const Divider(),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Text(
+                          'Total:',
+                          style: TextStyle(fontWeight: FontWeight.bold),
+                        ),
+                        Text(
+                          '\$${(total * 1.1).toStringAsFixed(2)}',
+                          style: const TextStyle(fontWeight: FontWeight.bold),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              try {
+                // Update user info if changed
+                if (userData?['name'] != nameController.text ||
+                    userData?['phone'] != phoneController.text ||
+                    userData?['address'] != addressController.text) {
+                  await userProvider.updateUser(
+                    name: nameController.text,
+                    address: addressController.text,
+                  );
+                }
+
+                // Process order
+                // ignore: use_build_context_synchronously
+                await context.read<UserProvider>().processOrder(
+                      // ignore: use_build_context_synchronously
+                      context.read<CartProvider>().items,
+                      // ignore: use_build_context_synchronously
+                      context.read<CartProvider>().totalAmount,
+                    );
+
+                if (context.mounted) {
+                  Navigator.pop(context); // Close dialog
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Order placed successfully!')),
+                  );
+                }
+              } catch (e) {
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('Error: $e')),
+                  );
+                }
+              }
+            },
+            child: const Text('Place Order'),
+          ),
+        ],
       ),
     );
-
-    try {
-      // Process the order
-      await context.read<UserProvider>().processOrder(
-            cart.items,
-            cart.totalAmount,
-          );
-
-      // Clear the cart
-      cart.clear();
-
-      // Close loading dialog
-      if (context.mounted) {
-        Navigator.pop(context);
-
-        // Show success dialog
-        showDialog(
-          context: context,
-          builder: (context) => AlertDialog(
-            title: const Text('Order Placed Successfully'),
-            content: const Text(
-                'Your order has been placed and will be processed shortly.'),
-            actions: [
-              TextButton(
-                onPressed: () {
-                  Navigator.pop(context); // Close dialog
-                },
-                child: const Text('OK'),
-              ),
-            ],
-          ),
-        );
-      }
-    } catch (e) {
-      // Close loading dialog
-      if (context.mounted) {
-        Navigator.pop(context);
-
-        // Show error dialog
-        showDialog(
-          context: context,
-          builder: (context) => AlertDialog(
-            title: const Text('Error'),
-            content: Text('Failed to process order: ${e.toString()}'),
-            actions: [
-              TextButton(
-                onPressed: () {
-                  Navigator.pop(context);
-                },
-                child: const Text('OK'),
-              ),
-            ],
-          ),
-        );
-      }
-    }
   }
 }

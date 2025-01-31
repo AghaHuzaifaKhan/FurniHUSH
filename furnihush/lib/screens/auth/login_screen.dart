@@ -3,6 +3,9 @@ import 'package:furnihush/screens/auth/signup_screen.dart';
 import 'package:furnihush/screens/home/home_screen.dart';
 import 'package:furnihush/controllers/auth_controller.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:furnihush/screens/auth/forgot_password_screen.dart';
+import 'package:furnihush/providers/user_provider.dart';
+import 'package:provider/provider.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -37,14 +40,14 @@ class _LoginScreenState extends State<LoginScreen> {
                     children: [
                       Image.asset(
                         'assets/icons/applogo.png',
-                        height: 100,
-                        width: 100,
+                        height: 120,
+                        width: 120,
                       ),
                       const SizedBox(height: 16),
                       const Text(
-                        'FurniHUSH INC.',
+                        'Welcome Back',
                         style: TextStyle(
-                          fontSize: 24,
+                          fontSize: 28,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
@@ -122,7 +125,12 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                     TextButton(
                       onPressed: () {
-                        // Implement forgot password
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const ForgotPasswordScreen(),
+                          ),
+                        );
                       },
                       child: const Text('Forgot Password?'),
                     ),
@@ -225,7 +233,11 @@ class _LoginScreenState extends State<LoginScreen> {
         if (!mounted) return;
 
         if (result != null) {
-          // ignore: use_build_context_synchronously
+          // Initialize user data
+          await context.read<UserProvider>().fetchUserData();
+
+          // Navigate to home
+          if (!mounted) return;
           Navigator.pushReplacement(
             context,
             MaterialPageRoute(builder: (context) => const HomeScreen()),
