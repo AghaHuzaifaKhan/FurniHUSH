@@ -5,13 +5,15 @@ import '../../widgets/admin_card.dart';
 class AdminDashboard extends StatelessWidget {
   final db = DatabaseService();
 
+  AdminDashboard({super.key});
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('Admin Dashboard')),
+      appBar: AppBar(title: const Text('Admin Dashboard')),
       body: GridView.count(
         crossAxisCount: 2,
-        padding: EdgeInsets.all(16),
+        padding: const EdgeInsets.all(16),
         children: [
           AdminCard(
             title: 'Products',
