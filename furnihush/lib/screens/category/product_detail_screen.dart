@@ -166,8 +166,9 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                     context,
                     MaterialPageRoute(
                       builder: (context) => ARViewScreen(
-                        modelUrl: product.arModelUrl,
-                        productName: product.name,
+                        modelUrl:
+                            'https://furnihush.s3.us-east-2.amazonaws.com/models/sofa.glb',
+                        productName: 'sofa',
                       ),
                     ),
                   );
@@ -185,14 +186,11 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
               flex: 2,
               child: ElevatedButton.icon(
                 onPressed: () {
-                  context.read<CartProvider>().addToCart(
-                        CartItem(
-                          id: widget.productId,
-                          name: widget.name ?? 'Unknown Product',
-                          price: widget.price ?? 0.0,
-                          image: widget.images?.first ?? '',
-                          quantity: 1,
-                        ),
+                  context.read<CartProvider>().addItem(
+                        id: widget.productId,
+                        name: widget.name ?? 'Unknown Product',
+                        price: widget.price ?? 0.0,
+                        image: widget.images?.first ?? '',
                       );
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(content: Text('Added to cart')),

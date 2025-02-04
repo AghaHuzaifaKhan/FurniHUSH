@@ -1,0 +1,7 @@
+flask
+pandas
+scikit-learn>=1.0.0
+numpy
+joblib
+openpyxl
+firebase-admin==6.2.0

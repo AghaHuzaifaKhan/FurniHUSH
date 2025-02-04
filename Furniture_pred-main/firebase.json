@@ -1,0 +1,55 @@
+{
+  "flutter": {
+    "platforms": {
+      "android": {
+        "default": {
+          "projectId": "furniture-sales-pred",
+          "appId": "1:373058330074:android:210731994e32350f7474e3",
+          "fileOutput": "android/app/google-services.json"
+        }
+      },
+      "dart": {
+        "lib/firebase_options.dart": {
+          "projectId": "furniture-sales-pred",
+          "configurations": {
+            "android": "1:373058330074:android:210731994e32350f7474e3",
+            "ios": "1:373058330074:ios:f386d2f5fe8021a47474e3",
+            "macos": "1:373058330074:ios:f386d2f5fe8021a47474e3",
+            "web": "1:373058330074:web:f7f61259600187267474e3",
+            "windows": "1:373058330074:web:5e98bdb23bc0ba2a7474e3"
+          }
+        }
+      }
+    }
+  },
+  "hosting": {
+    "public": "build/web",
+    "ignore": [
+      "firebase.json",
+      "**/.*",
+      "**/node_modules/**"
+    ],
+    "rewrites": [
+      {
+        "source": "**",
+        "destination": "/index.html"
+      }
+    ]
+  },
+  "functions": [
+    {
+      "source": "functions",
+      "codebase": "default",
+      "ignore": [
+        "node_modules",
+        ".git",
+        "firebase-debug.log",
+        "firebase-debug.*.log",
+        "*.local"
+      ],
+      "predeploy": [
+        "npm --prefix \"$RESOURCE_DIR\" run lint"
+      ]
+    }
+  ]
+}

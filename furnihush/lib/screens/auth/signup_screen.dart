@@ -168,9 +168,7 @@ class _SignupScreenState extends State<SignupScreen> {
               _nameController.text,
               _emailController.text,
               _passwordController.text,
-              _numberController.text,
-              '',
-              _addressController.text);
+              _numberController.text);
           if (!mounted) return;
 
           // ignore: use_build_context_synchronously

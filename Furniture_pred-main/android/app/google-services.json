@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "373058330074",
+    "project_id": "furniture-sales-pred",
+    "storage_bucket": "furniture-sales-pred.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:373058330074:android:210731994e32350f7474e3",
+        "android_client_info": {
+          "package_name": "com.example.furniture_pred"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCVSDZcoIAL3LSSokhBagbvejwkIBHrLmw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
