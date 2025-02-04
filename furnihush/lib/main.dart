@@ -4,15 +4,15 @@ import 'package:furnihush/providers/cart_provider.dart';
 import 'package:furnihush/providers/user_provider.dart';
 import 'package:furnihush/screens/splash/splash_screen.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:furnihush/services/database.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp();
 
-  try {
-    await Firebase.initializeApp();
-  } catch (e) {
-    debugPrint('Firebase initialization error: $e');
-  }
+  // Initialize products (run this once)
+  final db = DatabaseService();
+  await db.initializeProducts();
 
   runApp(const MyApp());
 }

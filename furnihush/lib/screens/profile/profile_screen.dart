@@ -42,11 +42,11 @@ class ProfileScreenState extends State<ProfileScreen> {
             child: Column(
               children: [
                 const SizedBox(height: 20),
-                Image.asset(
-                  'assets/icons/applogo.png',
-                  height: 80,
-                  width: 80,
-                ),
+                // Image.asset(
+                //   'assets/icons/applogo.png',
+                //   height: 80,
+                //   width: 80,
+                // ),
                 const SizedBox(height: 20),
                 // Profile Image
                 Column(
@@ -156,14 +156,27 @@ class ProfileScreenState extends State<ProfileScreen> {
                   padding: const EdgeInsets.symmetric(horizontal: 16),
                   child: ElevatedButton(
                     onPressed: () async {
-                      await context.read<AuthController>().signOut();
-                      if (mounted) {
-                        Navigator.pushReplacement(
-                          // ignore: use_build_context_synchronously
-                          context,
+                      try {
+                        await context.read<AuthController>().signOut();
+                        if (!mounted) return;
+
+                        // Clear user data from provider
+                        // ignore: use_build_context_synchronously
+                        context.read<UserProvider>().clearUserData();
+
+                        // Navigate to login screen
+                        // ignore: use_build_context_synchronously
+                        Navigator.of(context).pushAndRemoveUntil(
                           MaterialPageRoute(
                             builder: (context) => const LoginScreen(),
                           ),
+                          (route) => false, // This removes all previous routes
+                        );
+                      } catch (e) {
+                        if (!mounted) return;
+                        // ignore: use_build_context_synchronously
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text('Error signing out: $e')),
                         );
                       }
                     },

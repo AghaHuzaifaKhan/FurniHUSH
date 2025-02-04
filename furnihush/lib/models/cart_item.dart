@@ -1,17 +1,13 @@
+import 'product.dart';
+
 class CartItem {
-  final int id;
-  final String name;
-  final double price;
-  final String image;
-  int quantity;
+  final Product product;
+  final int quantity;
 
   CartItem({
-    required this.id,
-    required this.name,
-    required this.price,
-    required this.image,
-    this.quantity = 1,
+    required this.product,
+    required this.quantity,
   });
 
-  double get total => price * quantity;
+  double get total => product.price * quantity;
 }

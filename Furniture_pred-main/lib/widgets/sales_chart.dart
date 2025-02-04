@@ -53,7 +53,7 @@ class SalesChart extends StatelessWidget {
                       padding: const EdgeInsets.symmetric(
                           horizontal: 12, vertical: 6),
                       decoration: BoxDecoration(
-                        color: trendColor.withOpacity(0.1),
+                        color: trendColor.withValues(),
                         borderRadius: BorderRadius.circular(20),
                       ),
                       child: Row(
@@ -81,7 +81,7 @@ class SalesChart extends StatelessWidget {
                     borderRadius: BorderRadius.circular(12),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.grey.withOpacity(0.1),
+                        color: Colors.grey.withValues(),
                         spreadRadius: 2,
                         blurRadius: 5,
                         offset: const Offset(0, 3),
@@ -95,11 +95,11 @@ class SalesChart extends StatelessWidget {
                         drawVerticalLine: true,
                         horizontalInterval: 10,
                         getDrawingHorizontalLine: (value) => FlLine(
-                          color: Colors.grey.withOpacity(0.2),
+                          color: Colors.grey.withValues(),
                           strokeWidth: 1,
                         ),
                         getDrawingVerticalLine: (value) => FlLine(
-                          color: Colors.grey.withOpacity(0.2),
+                          color: Colors.grey.withValues(),
                           strokeWidth: 1,
                         ),
                       ),
@@ -169,7 +169,7 @@ class SalesChart extends StatelessWidget {
                           gradient: LinearGradient(
                             colors: [
                               Theme.of(context).primaryColor,
-                              Theme.of(context).primaryColor.withOpacity(0.5),
+                              Theme.of(context).primaryColor.withValues(),
                             ],
                           ),
                           barWidth: 3,
@@ -190,8 +190,8 @@ class SalesChart extends StatelessWidget {
                               begin: Alignment.topCenter,
                               end: Alignment.bottomCenter,
                               colors: [
-                                Theme.of(context).primaryColor.withOpacity(0.2),
-                                Theme.of(context).primaryColor.withOpacity(0.0),
+                                Theme.of(context).primaryColor.withValues(),
+                                Theme.of(context).primaryColor.withValues(),
                               ],
                             ),
                           ),
@@ -239,9 +239,9 @@ class SalesChart extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: trendColor.withOpacity(0.1),
+                    color: trendColor.withValues(),
                     borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: trendColor.withOpacity(0.3)),
+                    border: Border.all(color: trendColor.withValues()),
                   ),
                   child: Row(
                     children: [
@@ -282,7 +282,7 @@ class SalesChart extends StatelessWidget {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
               decoration: BoxDecoration(
-                color: _getPriorityColor(priority).withOpacity(0.1),
+                color: _getPriorityColor(priority).withValues(),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Text(

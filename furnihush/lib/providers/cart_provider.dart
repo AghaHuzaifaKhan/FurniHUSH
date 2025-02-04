@@ -13,11 +13,12 @@ class CartProvider with ChangeNotifier {
   }
 
   void addItem({
-    required int id,
+    required String id,
     required String name,
     required double price,
     required String image,
   }) {
+    // ignore: unrelated_type_equality_checks
     final existingItemIndex = _items.indexWhere((item) => item.id == id);
 
     if (existingItemIndex >= 0) {
@@ -25,7 +26,7 @@ class CartProvider with ChangeNotifier {
     } else {
       _items.add(
         CartItem(
-          id: id,
+          id: int.parse(id),
           name: name,
           price: price,
           image: image,

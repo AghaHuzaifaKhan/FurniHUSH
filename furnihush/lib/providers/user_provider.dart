@@ -125,15 +125,32 @@ class UserProvider with ChangeNotifier {
   }
 
   Future<void> processOrder(List<CartItem> items, double total) async {
+    final userId = auth.FirebaseAuth.instance.currentUser?.uid;
+    if (userId == null) throw 'User not authenticated';
+
     final order = Order(
       id: 'ORD${DateTime.now().millisecondsSinceEpoch}',
-      date: DateTime.now(),
-      items: items,
+      userId: userId,
+      items: items
+          .map((item) => OrderItem(
+                productId: item.product.id,
+                productName: item.product.name,
+                quantity: item.quantity,
+                price: item.product.price,
+              ))
+          .toList(),
       total: total,
-      status: 'Processing',
+      status: 'pending',
+      createdAt: DateTime.now(),
+      shippingAddress: '',
     );
 
     _orders.add(order);
+    notifyListeners();
+  }
+
+  void clearUserData() {
+    _userData = null;
     notifyListeners();
   }
 }

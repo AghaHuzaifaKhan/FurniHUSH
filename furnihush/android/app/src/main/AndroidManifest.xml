@@ -1,4 +1,7 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <uses-permission android:name="android.permission.CAMERA" />
+    <uses-feature android:name="android.hardware.camera.ar" />
+    
     <application
         android:label="furnihush"
         android:name="${applicationName}"
@@ -30,6 +33,15 @@
         <meta-data
             android:name="flutterEmbedding"
             android:value="2" />
+        <!-- Add your Google Sign In configuration -->
+        <meta-data
+            android:name="com.google.android.gms.version"
+            android:value="@integer/google_play_services_version" />
+        <!-- Add your OAuth client ID -->
+        <meta-data 
+            android:name="com.google.android.gms.oauth_client_id"
+            android:value="796653433533-xxxxxxxxxxxxxxxx.apps.googleusercontent.com"/>
+        <meta-data android:name="com.google.ar.core" android:value="required" />
     </application>
     <!-- Required to query activities that can process text, see:
          https://developer.android.com/training/package-visibility and

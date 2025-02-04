@@ -4,21 +4,21 @@ import 'package:furnihush/providers/cart_provider.dart';
 import 'package:furnihush/screens/ar/ar_view_screen.dart';
 
 class ProductDetailScreen extends StatefulWidget {
-  final int productId;
-  final String? categoryName;
-  final List<String>? images;
   final String? name;
   final double? price;
   final String? description;
+  final List<String>? images;
+  final String productId;
+  final String? arModelUrl;
 
   const ProductDetailScreen({
     super.key,
-    required this.productId,
-    this.categoryName,
-    this.images,
     this.name,
     this.price,
     this.description,
+    this.images,
+    required this.productId,
+    this.arModelUrl,
   });
 
   @override
@@ -161,14 +161,16 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
             Expanded(
               flex: 1,
               child: ElevatedButton.icon(
-                onPressed: () {
+                onPressed: () async {
+                  await ARViewScreen.checkARAvailability(context);
+                  if (!context.mounted) return;
+
                   Navigator.push(
                     context,
                     MaterialPageRoute(
                       builder: (context) => ARViewScreen(
-                        modelUrl:
-                            'https://furnihush.s3.us-east-2.amazonaws.com/models/sofa.glb',
-                        productName: 'sofa',
+                        modelUrl: widget.arModelUrl ?? 'assets/icons/sofa.glb',
+                        productName: widget.name ?? 'sofa',
                       ),
                     ),
                   );

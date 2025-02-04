@@ -183,7 +183,7 @@ class CategoryProductsSheet extends StatelessWidget {
                           context,
                           MaterialPageRoute(
                             builder: (context) => ProductDetailScreen(
-                              productId: index,
+                              productId: index.toString(),
                               name: '${category['name']} Item ${index + 1}',
                               price: (index + 1) * 100.0,
                               images: [category['images'][index]],

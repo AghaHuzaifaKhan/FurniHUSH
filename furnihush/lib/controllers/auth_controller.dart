@@ -3,11 +3,19 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:furnihush/models/cart_item.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import 'package:flutter/foundation.dart';
 
-class AuthController {
+class AuthController extends ChangeNotifier {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-  final GoogleSignIn _googleSignIn = GoogleSignIn();
+  final GoogleSignIn _googleSignIn = GoogleSignIn(
+    scopes: [
+      'email',
+      'profile',
+    ],
+    clientId:
+        '796653433533-b0g4kb40mrij4jea4gkcas9t8n7mpklp.apps.googleusercontent.com',
+  );
 
   // Login method
   Future<UserCredential?> loginMethod(String email, String password) async {
@@ -25,44 +33,45 @@ class AuthController {
   // Google Sign In method
   Future<UserCredential?> signInWithGoogle() async {
     try {
-      // Begin interactive sign in process
+      await _googleSignIn.signOut(); // Sign out first to show account picker
       final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
 
-      // If user cancels sign in, return null
       if (googleUser == null) return null;
 
       try {
-        // Obtain auth details from request
         final GoogleSignInAuthentication googleAuth =
             await googleUser.authentication;
-
-        // Create a new credential for Firebase
-        final OAuthCredential credential = GoogleAuthProvider.credential(
+        final credential = GoogleAuthProvider.credential(
           accessToken: googleAuth.accessToken,
           idToken: googleAuth.idToken,
         );
 
-        // Once signed in, return the UserCredential
         final userCredential = await _auth.signInWithCredential(credential);
 
-        // Store user data in Firestore if it doesn't exist
-        final userDoc = await _firestore
-            .collection('users')
-            .doc(userCredential.user?.uid)
-            .get();
-
-        if (!userDoc.exists) {
-          await _firestore
+        // Store user data in Firestore
+        if (userCredential.user != null) {
+          final userDoc = await _firestore
               .collection('users')
-              .doc(userCredential.user?.uid)
-              .set({
-            'name': googleUser.displayName ?? '',
-            'email': googleUser.email,
-            'image': googleUser.photoUrl ?? '',
-            'createdAt': Timestamp.now(),
-          });
+              .doc(userCredential.user!.uid)
+              .get();
+
+          if (!userDoc.exists) {
+            await _firestore
+                .collection('users')
+                .doc(userCredential.user!.uid)
+                .set({
+              'name': googleUser.displayName ?? '',
+              'email': googleUser.email,
+              'image': googleUser.photoUrl ?? '',
+              'createdAt': Timestamp.now(),
+              'cart': [],
+              'wishlist': [],
+              'orders': [],
+            });
+          }
         }
 
+        notifyListeners();
         return userCredential;
       } catch (e) {
         debugPrint('Google auth error: $e');
@@ -105,7 +114,13 @@ class AuthController {
 
   // Signout method
   Future<void> signOut() async {
-    await _auth.signOut();
+    try {
+      await _auth.signOut();
+      notifyListeners();
+    } catch (e) {
+      debugPrint('Error signing out: $e');
+      rethrow;
+    }
   }
 
   // store cart data

@@ -1,3 +1,4 @@
+from unittest import result
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 import numpy as np
@@ -8,6 +9,9 @@ import pickle
 import os
 import logging
 from pathlib import Path
+from sklearn.preprocessing import ColumnTransformer, OneHotEncoder
+from sklearn.pipeline import Pipeline
+from sklearn.ensemble import RandomForestRegressor
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -20,6 +24,9 @@ CORS(app)  # Enable CORS for all routes
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 MODEL_PATH = os.path.join(BASE_DIR, 'lib', 'functions', 'models', 'sales_model.pkl')
 
+# Increase maximum content length to 16MB
+app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024
+
 def load_model():
     try:
         app.logger.info(f'Attempting to load model from: {MODEL_PATH}')
@@ -29,7 +36,37 @@ def load_model():
             return model
     except Exception as e:
         app.logger.error(f'Error loading model: {str(e)}')
-        return None
+        try:
+            # Retrain model with current scikit-learn version
+            data = pd.read_csv('path/to/your/training_data.csv')
+            categorical_features = ['gender', 'customer_login_type', 'order_priority', 'product', 'payment_method']
+            
+            # Use sparse_output instead of sparse for newer scikit-learn versions
+            preprocessor = ColumnTransformer(
+                transformers=[
+                    ('cat', OneHotEncoder(drop='first', sparse_output=False), categorical_features)
+                ])
+            
+            model = Pipeline([
+                ('preprocessor', preprocessor),
+                ('regressor', RandomForestRegressor(n_estimators=100, random_state=42))
+            ])
+            
+            X = data[categorical_features]
+            y = data['sales']
+            model.fit(X, y)
+            
+            # Save the retrained model
+            os.makedirs(os.path.dirname(MODEL_PATH), exist_ok=True)
+            with open(MODEL_PATH, 'wb') as f:
+                pickle.dump(model, f)
+                
+            app.logger.info('Model retrained and saved successfully')
+            return model
+            
+        except Exception as train_error:
+            app.logger.error(f'Error retraining model: {str(train_error)}')
+            return None
 
 model = load_model()
 
@@ -41,19 +78,18 @@ def validate_columns(df):
 
 @app.route('/upload', methods=['POST'])
 def upload_file():
-    app.logger.info('Upload endpoint accessed')
-    if not model:
-        return jsonify({"error": "Model not loaded"}), 500
-        
-    if 'file' not in request.files:
-        return jsonify({"error": "No file part"}), 400
-    
-    file = request.files['file']
-    if file.filename == '':
-        return jsonify({"error": "No selected file"}), 400
-
     try:
-        # Read the uploaded file
+        if 'file' not in request.files:
+            return jsonify({'error': 'No file uploaded'}), 400
+            
+        file = request.files['file']
+        if file.filename == '':
+            return jsonify({'error': 'No file selected'}), 400
+            
+        if not file.filename.endswith('.csv'):
+            return jsonify({'error': 'Only CSV files are allowed'}), 400
+
+        # Read CSV file
         df = pd.read_csv(file)
         df.columns = df.columns.str.lower()
         validate_columns(df)
@@ -61,51 +97,42 @@ def upload_file():
         # Define furniture keywords for filtering
         furniture_keywords = [
             'chair', 'table', 'bed', 'sofa', 'almirah', 'wardrobe', 
-            'cabinet', 'shelf', 'desk', 'dresser', 'dressing', 
-            'stool', 'bench', 'couch', 'ottoman', 'bookcase',
-            'sideboard', 'cupboard', 'chest', 'drawer', 'rack',
-            'stand', 'unit', 'storage', 'furniture'
+            'cabinet', 'shelf', 'desk', 'dresser'
         ]
         
-        # Filter for furniture items using keywords
+        # Filter for furniture items
         df['product'] = df['product'].str.lower()
         furniture_mask = df['product'].str.contains('|'.join(furniture_keywords), case=False, na=False)
         furniture_df = df[furniture_mask]
         
         if furniture_df.empty:
-            return jsonify({"error": "No furniture items found in the data"}), 400
-        
-        # Make predictions for furniture items only
+            return jsonify({'error': 'No furniture items found in data'}), 400
+            
+        # Make predictions
         predictions = model.predict(furniture_df)
         
         # Calculate average predictions per product
-        products_df = pd.DataFrame({
+        results = pd.DataFrame({
             'product': furniture_df['product'],
             'predicted_sales': predictions
-        })
+        }).groupby('product')['predicted_sales'].mean()
         
-        unique_products = products_df.groupby('product')['predicted_sales'].mean().reset_index()
-        
-        # Format items response with capitalized product names
         items = [{
-            "name": row['product'].title(),
-            "predicted_sales": round(float(row['predicted_sales']), 2)
-        } for _, row in unique_products.iterrows()]
-        
-        # Sort items by predicted sales in descending order
-        items.sort(key=lambda x: x['predicted_sales'], reverse=True)
+            'name': name.title(),
+            'predicted_sales': round(float(value), 2)
+        } for name, value in results.items()]
         
         return jsonify({
-            "message": "File processed successfully",
-            "items": items
-        }), 200
-        
+            'message': 'File processed successfully',
+            'items': sorted(items, key=lambda x: x['predicted_sales'], reverse=True)
+        })
+
     except ValueError as ve:
-        app.logger.error(f'Validation error: {str(ve)}')
-        return jsonify({"error": str(ve)}), 400
+        logger.error(f'Validation error: {str(ve)}')
+        return jsonify({'error': str(ve)}), 400
     except Exception as e:
-        app.logger.error(f'Upload error: {str(e)}')
-        return jsonify({"error": str(e)}), 500
+        logger.error(f'Error processing file: {str(e)}')
+        return jsonify({'error': str(e)}), 500
 
 @app.route('/health', methods=['GET'])
 def health_check():
