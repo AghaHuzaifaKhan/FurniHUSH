@@ -1,6 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart' as fs;
 
-class DummyDatabase {
+class Database {
   final fs.FirebaseFirestore _firestore = fs.FirebaseFirestore.instance;
 
   Future<void> initializeDummyData() async {
