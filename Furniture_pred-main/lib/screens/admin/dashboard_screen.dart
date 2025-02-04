@@ -1,3 +1,7 @@
+import 'package:flutter/material.dart';
+import '../../services/database.dart';
+import '../../widgets/admin_card.dart';
+
 class AdminDashboard extends StatelessWidget {
   final db = DatabaseService();
 
